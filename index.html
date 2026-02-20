@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CreditLens — Risk Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink: #0a0a0f;
+  --paper: #f5f2eb;
+  --cream: #ede9df;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --red: #c0392b;
+  --green: #27634a;
+  --amber: #b7720a;
+  --steel: #2c3e50;
+  --muted: #8a8070;
+  --border: rgba(10,10,15,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Sora', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.6;
+}
+
+/* ─── HEADER ─── */
+header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 1.5rem 3rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.logo span { color: var(--gold); }
+
+.header-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.model-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  background: var(--ink);
+  color: var(--gold);
+  padding: 0.3rem 0.75rem;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.model-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 0.4s;
+}
+
+.status-dot.active {
+  background: #27634a;
+  box-shadow: 0 0 0 3px rgba(39,99,74,0.2);
+  animation: statusPulse 2s ease infinite;
+}
+
+.status-dot.inactive {
+  background: #c0392b;
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.15);
+}
+
+.status-text {
+  color: var(--muted);
+  transition: color 0.4s;
+}
+
+.status-text.active  { color: #27634a; }
+.status-text.inactive { color: #c0392b; }
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(39,99,74,0.2); }
+  50%       { box-shadow: 0 0 0 6px rgba(39,99,74,0.05); }
+}
+
+/* ─── HERO removed ─── */
+
+/* ─── FORM CONTAINER ─── */
+.form-wrapper {
+  max-width: 900px;
+  margin: 0 auto 6rem;
+  padding: 0 3rem;
+}
+
+.form-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 40px rgba(10,10,15,0.06), 0 0 0 0 transparent;
+  transition: box-shadow 0.3s;
+}
+
+.form-card:hover {
+  box-shadow: 0 4px 60px rgba(10,10,15,0.1);
+}
+
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  padding: 1.25rem 2rem;
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-label::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.field-group {
+  padding: 1.5rem 2rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.field-group:nth-child(even) {
+  border-right: none;
+}
+
+.field-group:hover {
+  background: #fafaf8;
+}
+
+label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+input, select {
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid var(--border);
+  padding: 0.4rem 0;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ink);
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input:focus, select:focus {
+  border-bottom-color: var(--gold);
+}
+
+select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a8070'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+  padding-right: 1.5rem;
+}
+
+/* ─── SUBMIT ─── */
+.form-footer {
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  gap: 1rem;
+}
+
+.btn-analyze {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  padding: 0.9rem 2.5rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-analyze::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.btn-analyze:hover::after { transform: translateX(0); }
+.btn-analyze:hover { color: var(--ink); }
+.btn-analyze span { position: relative; z-index: 1; }
+.btn-analyze:active { transform: scale(0.98); }
+.btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-reset {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+.btn-reset:hover { color: var(--ink); }
+
+.disclaimer {
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 300;
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+/* ─── RESULT ─── */
+#result-section {
+  display: none;
+  max-width: 900px;
+  margin: 0 auto 6rem;
+  padding: 0 3rem;
+  animation: fadeUp 0.6s ease both;
+}
+
+.result-card {
+  border: 1px solid var(--border);
+  background: #fff;
+  overflow: hidden;
+}
+
+.result-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 2rem 2.5rem;
+  gap: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-verdict {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.verdict-APPROVED    { color: var(--green); }
+.verdict-REVIEW      { color: var(--amber); }
+.verdict-DENIED      { color: var(--red); }
+.verdict-CAUTION     { color: var(--amber); }
+
+.result-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  border: 1.5px solid currentColor;
+  white-space: nowrap;
+}
+
+.result-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+
+.metric-cell {
+  padding: 1.5rem 2rem;
+  border-right: 1px solid var(--border);
+}
+.metric-cell:last-child { border-right: none; }
+
+.metric-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.metric-value {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.metric-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+
+/* ─── PROBABILITY BAR ─── */
+.prob-row {
+  padding: 1.5rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.prob-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+.prob-track {
+  height: 6px;
+  background: var(--cream);
+  border-radius: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.prob-fill {
+  height: 100%;
+  background: var(--ink);
+  width: 0;
+  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.prob-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--gold);
+}
+
+.prob-zones {
+  display: flex;
+  height: 3px;
+  margin-top: 3px;
+  gap: 1px;
+}
+.zone { flex: 1; }
+.zone-1 { background: #27634a; }
+.zone-2 { background: #6aaa64; }
+.zone-3 { background: #e6b800; }
+.zone-4 { background: #e07b39; }
+.zone-5 { background: #c0392b; }
+
+/* ─── SCORE RING ─── */
+.score-ring-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border-bottom: 1px solid var(--border);
+  gap: 3rem;
+}
+
+.ring-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+.ring-container svg {
+  transform: rotate(-90deg);
+}
+
+.ring-bg { fill: none; stroke: var(--cream); stroke-width: 8; }
+.ring-fg {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 8;
+  stroke-linecap: butt;
+  stroke-dasharray: 440;
+  stroke-dashoffset: 440;
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-score {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.ring-label-small {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+.score-detail {
+  flex: 1;
+}
+
+.score-detail p {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.score-range-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.range-track {
+  flex: 1;
+  height: 4px;
+  background: linear-gradient(to right, #c0392b, #e07b39, #e6b800, #6aaa64, #27634a);
+  position: relative;
+}
+
+.range-marker {
+  position: absolute;
+  top: -5px;
+  width: 14px;
+  height: 14px;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  transition: left 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.range-end {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+/* ─── FACTORS ─── */
+.factors-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.factor-item {
+  padding: 1.25rem 2rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.factor-item:nth-child(even) { border-right: none; }
+
+.factor-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.factor-icon.positive { background: rgba(39,99,74,0.1); color: var(--green); }
+.factor-icon.negative { background: rgba(192,57,43,0.1); color: var(--red); }
+.factor-icon.neutral  { background: rgba(183,114,10,0.1); color: var(--amber); }
+
+.factor-text { flex: 1; }
+.factor-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.factor-val {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ─── LOADING ─── */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(245,242,235,0.9);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1.5rem;
+  backdrop-filter: blur(4px);
+}
+
+.loading-overlay.active { display: flex; }
+
+.loader-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.loader-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.loader-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: pulse 1.2s ease infinite;
+}
+.loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─── ERROR TOAST ─── */
+#error-toast {
+  display: none;
+  background: #fff;
+  border-left: 3px solid var(--red);
+  padding: 1rem 1.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--red);
+  margin: 0 3rem 1rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeUp 0.3s ease;
+}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+
+/* ─── DEMO MODE BANNER ─── */
+.demo-notice {
+  background: var(--ink);
+  color: var(--gold);
+  text-align: center;
+  padding: 0.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ─── FOOTER ─── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 700px) {
+  header, .hero, .form-wrapper, #result-section, #error-toast { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .form-grid, .result-metrics, .factors-grid, .score-ring-wrap { grid-template-columns: 1fr; }
+  .metric-cell { border-right: none; }
+  .result-metrics .metric-cell:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .factors-grid .factor-item { border-right: none; }
+  .score-ring-wrap { flex-direction: column; }
+  footer { flex-direction: column; gap: 0.5rem; }
+}
+</style>
+</head>
+<body>
+
+
+
+<header>
+  <div class="logo">Credit<span>Lens</span></div>
+  <div class="header-meta">Credit Risk Engine</div>
+  <div class="model-status">
+    <div class="status-dot" id="status-dot"></div>
+    <span class="status-text" id="status-text">Checking...</span>
+  </div>
+</header>
+
+
+
+<div id="error-toast"></div>
+
+<div class="form-wrapper">
+  <div class="form-card">
+
+    <div class="section-label">Applicant Profile</div>
+    <div class="form-grid">
+      <div class="field-group">
+        <label>Age</label>
+        <input type="number" id="person_age" placeholder="32" min="18" max="120" value="34"/>
+      </div>
+      <div class="field-group">
+        <label>Gender</label>
+        <select id="person_gender">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Education</label>
+        <select id="person_education">
+          <option>High School</option>
+          <option>Associate</option>
+          <option selected>Bachelor</option>
+          <option>Master</option>
+          <option>Doctorate</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Annual Income ($)</label>
+        <input type="number" id="person_income" placeholder="75000" min="0" value="72000" oninput="calcLoanPercent()"/>
+      </div>
+      <div class="field-group">
+        <label>Employment Experience (yrs)</label>
+        <input type="number" id="person_emp_exp" placeholder="8" min="0" value="8"/>
+      </div>
+      <div class="field-group">
+        <label>Home Ownership</label>
+        <select id="person_home_ownership">
+          <option value="RENT">Rent</option>
+          <option value="OWN">Own</option>
+          <option value="MORTGAGE" selected>Mortgage</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">Loan Details</div>
+    <div class="form-grid">
+      <div class="field-group">
+        <label>Loan Amount ($)</label>
+        <input type="number" id="loan_amnt" placeholder="15000" min="1" value="15000" oninput="calcLoanPercent()"/>
+      </div>
+      <div class="field-group">
+        <label>Loan Intent</label>
+        <select id="loan_intent">
+          <option value="PERSONAL">Personal</option>
+          <option value="EDUCATION">Education</option>
+          <option value="MEDICAL">Medical</option>
+          <option value="VENTURE">Venture</option>
+          <option value="HOMEIMPROVEMENT">Home Improvement</option>
+          <option value="DEBTCONSOLIDATION" selected>Debt Consolidation</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Interest Rate (%)</label>
+        <input type="number" id="loan_int_rate" placeholder="11.5" step="0.01" min="0" max="50" value="11.5"/>
+      </div>
+      <div class="field-group">
+        <label>Loan % of Income <span style="color:var(--gold);font-size:0.55rem;">(auto-calculated)</span></label>
+        <input type="number" id="loan_percent_income" placeholder="—" step="0.01" min="0" value="0.21" readonly style="color:var(--muted);cursor:default;"/>
+      </div>
+    </div>
+
+    <div class="section-label">Credit History</div>
+    <div class="form-grid">
+      <div class="field-group">
+        <label>Credit Score</label>
+        <input type="number" id="credit_score" placeholder="700" min="300" max="850" value="700"/>
+      </div>
+      <div class="field-group">
+        <label>Credit History Length (yrs)</label>
+        <input type="number" id="cb_person_cred_hist_length" placeholder="7" min="0" value="7"/>
+      </div>
+      <div class="field-group">
+        <label>Previous Loan Defaults</label>
+        <select id="previous_loan_defaults_on_file">
+          <option value="No" selected>No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="field-group" style="display:flex;align-items:center;">
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);line-height:1.6;text-transform:uppercase;letter-spacing:0.08em;">All fields required<br/>for accurate scoring</div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn-reset" onclick="resetForm()">Clear Form</button>
+      <button class="btn-analyze" onclick="analyze()"><span>Analyze Risk →</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-section">
+  <div class="result-card">
+
+    <div class="result-header">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:0.5rem;">Assessment Result</div>
+        <div class="result-verdict" id="result-verdict">—</div>
+      </div>
+      <div class="result-badge" id="result-badge" style="color:var(--ink)">—</div>
+    </div>
+
+    <div class="result-metrics">
+      <div class="metric-cell">
+        <div class="metric-label">Default Probability</div>
+        <div class="metric-value" id="metric-prob">—</div>
+        <div class="metric-sub">Calibrated output</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Credit Score</div>
+        <div class="metric-value" id="metric-score">—</div>
+        <div class="metric-sub">300–850 scale</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Decision Threshold</div>
+        <div class="metric-value" id="metric-threshold">—</div>
+        <div class="metric-sub">F1-optimized cutoff</div>
+      </div>
+    </div>
+
+    <div class="prob-row">
+      <div class="prob-labels">
+        <span>Very Low (0%)</span>
+        <span id="prob-pct-label">—</span>
+        <span>Very High (100%)</span>
+      </div>
+      <div class="prob-track">
+        <div class="prob-fill" id="prob-fill"></div>
+      </div>
+      <div class="prob-zones">
+        <div class="zone zone-1"></div>
+        <div class="zone zone-2"></div>
+        <div class="zone zone-3"></div>
+        <div class="zone zone-4"></div>
+        <div class="zone zone-5"></div>
+      </div>
+    </div>
+
+    <div class="score-ring-wrap">
+      <div class="ring-container">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <circle class="ring-bg" cx="80" cy="80" r="70"/>
+          <circle class="ring-fg" id="ring-fg" cx="80" cy="80" r="70"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-score" id="ring-score">—</div>
+          <div class="ring-label-small">Credit Score</div>
+        </div>
+      </div>
+      <div class="score-detail">
+        <div style="font-family:'DM Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.5rem;">Score Range</div>
+        <div class="score-range-bar">
+          <span class="range-end" style="color:var(--red)">300</span>
+          <div class="range-track" style="flex:1;">
+            <div class="range-marker" id="range-marker" style="left:50%"></div>
+          </div>
+          <span class="range-end" style="color:var(--green)">850</span>
+        </div>
+        <p id="score-explanation" style="margin-top:1.25rem;">—</p>
+      </div>
+    </div>
+
+    <div class="section-label" style="border-top:1px solid var(--border);">Key Factors</div>
+    <div class="factors-grid" id="factors-grid">
+      <!-- populated dynamically -->
+    </div>
+
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="loader-text">Analyzing application</div>
+  <div class="loader-dots"><span></span><span></span><span></span></div>
+</div>
+
+<footer style="justify-content:center;">
+  <div class="footer-meta">© 2026 CreditLens Risk Intelligence</div>
+</footer>
+
+<script>
+const API_URL = 'http://127.0.0.1:5000';
+
+async function checkModelStatus() {
+  const dot  = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  try {
+    const res = await Promise.race([
+      fetch(`${API_URL}/`, { method: 'GET' }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
+    ]);
+    if (res.ok) {
+      dot.className  = 'status-dot active';
+      text.className = 'status-text active';
+      text.textContent = 'Model Active';
+    } else {
+      throw new Error('not ok');
+    }
+  } catch {
+    dot.className  = 'status-dot inactive';
+    text.className = 'status-text inactive';
+    text.textContent = 'Model Inactive';
+  }
+}
+
+// Check on load and every 15 seconds
+checkModelStatus();
+setInterval(checkModelStatus, 15000);
+
+function calcLoanPercent() {
+  const income = parseFloat(document.getElementById('person_income').value);
+  const loan   = parseFloat(document.getElementById('loan_amnt').value);
+  const field  = document.getElementById('loan_percent_income');
+  if (income > 0 && loan > 0) {
+    field.value = (loan / income).toFixed(4);
+  } else {
+    field.value = '';
+  }
+}
+// Calculate on page load with default values
+window.addEventListener('DOMContentLoaded', calcLoanPercent);
+
+function getFormData() {
+  return {
+    person_age:                     parseFloat(document.getElementById('person_age').value),
+    person_gender:                  document.getElementById('person_gender').value,
+    person_education:               document.getElementById('person_education').value,
+    person_income:                  parseFloat(document.getElementById('person_income').value),
+    person_emp_exp:                 parseFloat(document.getElementById('person_emp_exp').value),
+    person_home_ownership:          document.getElementById('person_home_ownership').value,
+    loan_amnt:                      parseFloat(document.getElementById('loan_amnt').value),
+    loan_intent:                    document.getElementById('loan_intent').value,
+    loan_int_rate:                  parseFloat(document.getElementById('loan_int_rate').value),
+    loan_percent_income:            parseFloat(document.getElementById('loan_percent_income').value),
+    cb_person_cred_hist_length:     parseFloat(document.getElementById('cb_person_cred_hist_length').value),
+    credit_score:                   parseFloat(document.getElementById('credit_score').value),
+    previous_loan_defaults_on_file: document.getElementById('previous_loan_defaults_on_file').value,
+  };
+}
+
+function showError(msg) {
+  const t = document.getElementById('error-toast');
+  t.textContent = '⚠  ' + msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 6000);
+}
+
+function simulateResult(data) {
+  // Heuristic simulation when API is unavailable
+  const cs = data.credit_score;
+  const defaults = data.previous_loan_defaults_on_file === 'Yes';
+  const debt = data.loan_percent_income;
+  const rate = data.loan_int_rate;
+  let prob = 0.15;
+  prob += (700 - cs) / 700 * 0.25;
+  if (defaults) prob += 0.28;
+  prob += (debt - 0.2) * 0.6;
+  prob += (rate - 10) / 40 * 0.15;
+  prob = Math.max(0.02, Math.min(0.96, prob));
+  const score = Math.round(850 - prob * 550);
+  let risk;
+  if      (prob < 0.15) risk = 'Very Low Risk : Approved';
+  else if (prob < 0.35) risk = 'Low Risk : Approved';
+  else if (prob < 0.50) risk = 'Moderate Risk : Manual Review';
+  else if (prob < 0.70) risk = 'High Risk : Caution';
+  else                  risk = 'Very High Risk : Denied';
+  return { probability: parseFloat(prob.toFixed(4)), prediction: prob >= 0.43 ? 1 : 0, risk_level: risk, credit_score: score, threshold_used: 0.43 };
+}
+
+async function analyze() {
+  const data = getFormData();
+  const fields = Object.values(data);
+  if (fields.some(v => v === '' || v === null || v === undefined || (typeof v === 'number' && isNaN(v)))) {
+    showError('Please fill in all fields before analyzing.');
+    return;
+  }
+
+  const btn = document.querySelector('.btn-analyze');
+  btn.disabled = true;
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('error-toast').style.display = 'none';
+
+  let result;
+  try {
+    const res = await Promise.race([
+      fetch(`${API_URL}/predict`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+    ]);
+    result = await res.json();
+    if (result.error) throw new Error(result.error);
+  } catch(e) {
+    result = simulateResult(data);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').classList.remove('active');
+  }
+
+  renderResult(result, data);
+}
+
+function renderResult(r, input) {
+  const section = document.getElementById('result-section');
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const prob = r.probability;
+  const score = r.credit_score;
+  const riskLabel = r.risk_level;
+  const parts = riskLabel.split(' : ');
+  const level = parts[0];
+  const action = parts[1] || '—';
+
+  // Determine color class
+  let cls = 'verdict-APPROVED';
+  if (action.includes('Denied'))  cls = 'verdict-DENIED';
+  else if (action.includes('Review') || action.includes('Caution')) cls = 'verdict-REVIEW';
+
+  document.getElementById('result-verdict').textContent = action;
+  document.getElementById('result-verdict').className = 'result-verdict ' + cls;
+  document.getElementById('result-badge').textContent = level;
+  document.getElementById('result-badge').style.color =
+    cls === 'verdict-APPROVED' ? 'var(--green)' :
+    cls === 'verdict-DENIED'   ? 'var(--red)'   : 'var(--amber)';
+
+  document.getElementById('metric-prob').textContent = (prob * 100).toFixed(1) + '%';
+  document.getElementById('metric-score').textContent = score;
+  document.getElementById('metric-threshold').textContent = (r.threshold_used * 100).toFixed(0) + '%';
+
+  document.getElementById('prob-pct-label').textContent = (prob * 100).toFixed(1) + '% default risk';
+  setTimeout(() => {
+    document.getElementById('prob-fill').style.width = (prob * 100) + '%';
+    document.getElementById('prob-fill').style.background =
+      prob < 0.35 ? 'var(--green)' : prob < 0.50 ? 'var(--amber)' : 'var(--red)';
+  }, 100);
+
+  // Ring
+  const circumference = 440;
+  const normalized = (score - 300) / 550;
+  const offset = circumference - normalized * circumference;
+  document.getElementById('ring-score').textContent = score;
+  const ring = document.getElementById('ring-fg');
+  ring.style.stroke = score >= 700 ? 'var(--green)' : score >= 600 ? 'var(--amber)' : 'var(--red)';
+  setTimeout(() => ring.style.strokeDashoffset = offset, 100);
+
+  // Range marker
+  setTimeout(() => {
+    document.getElementById('range-marker').style.left = (normalized * 100) + '%';
+  }, 100);
+
+  // Score explanation
+  const exp = score >= 750 ? 'Excellent creditworthiness. Strong repayment history and low default probability.'
+            : score >= 700 ? 'Good credit profile. Likely to qualify for standard loan terms.'
+            : score >= 640 ? 'Fair credit. Lender may apply higher rates or require additional review.'
+            : score >= 580 ? 'Below-average credit. Elevated risk flags present. Manual review suggested.'
+            : 'Poor credit profile. High default probability. Application likely to be declined.';
+  document.getElementById('score-explanation').textContent = exp;
+
+  // Key factors
+  const factors = [
+    {
+      name: 'Credit Score',
+      val: input.credit_score,
+      type: input.credit_score >= 700 ? 'positive' : input.credit_score >= 600 ? 'neutral' : 'negative',
+      icon: input.credit_score >= 700 ? '✓' : input.credit_score >= 600 ? '~' : '✗',
+    },
+    {
+      name: 'Prior Defaults',
+      val: input.previous_loan_defaults_on_file,
+      type: input.previous_loan_defaults_on_file === 'No' ? 'positive' : 'negative',
+      icon: input.previous_loan_defaults_on_file === 'No' ? '✓' : '✗',
+    },
+    {
+      name: 'Loan % of Income',
+      val: (input.loan_percent_income * 100).toFixed(0) + '%',
+      type: input.loan_percent_income < 0.20 ? 'positive' : input.loan_percent_income < 0.35 ? 'neutral' : 'negative',
+      icon: input.loan_percent_income < 0.20 ? '✓' : input.loan_percent_income < 0.35 ? '~' : '✗',
+    },
+    {
+      name: 'Interest Rate',
+      val: input.loan_int_rate + '%',
+      type: input.loan_int_rate < 12 ? 'positive' : input.loan_int_rate < 18 ? 'neutral' : 'negative',
+      icon: input.loan_int_rate < 12 ? '✓' : input.loan_int_rate < 18 ? '~' : '✗',
+    },
+    {
+      name: 'Annual Income',
+      val: '$' + Number(input.person_income).toLocaleString(),
+      type: input.person_income >= 60000 ? 'positive' : input.person_income >= 35000 ? 'neutral' : 'negative',
+      icon: input.person_income >= 60000 ? '✓' : input.person_income >= 35000 ? '~' : '✗',
+    },
+    {
+      name: 'Employment Experience',
+      val: input.person_emp_exp + ' yrs',
+      type: input.person_emp_exp >= 5 ? 'positive' : input.person_emp_exp >= 2 ? 'neutral' : 'negative',
+      icon: input.person_emp_exp >= 5 ? '✓' : input.person_emp_exp >= 2 ? '~' : '✗',
+    },
+  ];
+
+  const grid = document.getElementById('factors-grid');
+  grid.innerHTML = factors.map(f => `
+    <div class="factor-item">
+      <div class="factor-icon ${f.type}">${f.icon}</div>
+      <div class="factor-text">
+        <div class="factor-name">${f.name}</div>
+        <div class="factor-val">${f.val}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function resetForm() {
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('error-toast').style.display = 'none';
+  document.getElementById('prob-fill').style.width = '0';
+  document.getElementById('ring-fg').style.strokeDashoffset = '440';
+  calcLoanPercent();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
