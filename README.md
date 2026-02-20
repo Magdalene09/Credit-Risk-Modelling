@@ -1,160 +1,163 @@
 # Credit Risk Modelling
 
-An end-to-end **credit risk assessment platform** that combines advanced machine learning, probability calibration, risk monitoring, and a REST API backend with an interactive web interface.
-
-CreditLens predicts **loan default probability**, generates a **credit score (300–850 scale)**, and outputs an interpretable **risk decision recommendation** — designed to mirror real-world fintech risk pipelines.
+CreditLens is an end-to-end machine learning system for predicting **loan default probability** using applicant financial and demographic data. The project demonstrates a production style ML pipeline including preprocessing, feature engineering, hyperparameter tuning, probability calibration, threshold optimization, API deployment, and an interactive web interface.
 
 ---
 
-# 🔎 Project Highlights
+## 📌 Problem Statement
 
-* ✅ XGBoost model with randomized hyperparameter tuning (5-fold CV)
-* ✅ Early stopping using dedicated validation split
-* ✅ Platt scaling for probability calibration
-* ✅ F1-optimized decision threshold (calibration-set tuned)
-* ✅ KS Statistic & AUC gap monitoring
-* ✅ Feature drift detection (Kolmogorov–Smirnov test)
-* ✅ SHAP explainability support
-* ✅ REST API (Flask) for real-time inference
-* ✅ Interactive frontend dashboard
+Credit risk assessment is critical in financial services. Manual loan evaluation is inconsistent and inefficient.  
 
----
+This project aims to:
 
-# 🧠 Full ML Lifecycle Implementation
+- Analyze relationships between borrower attributes and loan default  
+- Build a machine learning model to **predict probability of default**  
+- Deploy the model via a **REST API** with a real-time frontend  
 
-1. Data preprocessing & encoding
-2. Feature engineering (derived financial ratios)
-3. Stratified data splitting (4-way split to prevent leakage)
-4. Hyperparameter search (RandomizedSearchCV)
-5. Early stopping validation
-6. Probability calibration (Platt scaling)
-7. Threshold optimization (F1-score based)
-8. Model serialization
-9. REST API deployment
-10. Frontend integration
+Loan default is treated as a binary classification task:
+
+- `1` → Default  
+- `0` → No Default  
 
 ---
 
-# 🛠 Tech Stack
+## 🧰 Technology Stack
 
-### Machine Learning
+**Machine Learning**
+- Python
+- XGBoost
+- Scikit-learn
+- Pandas, NumPy
+- SHAP (Explainability)
+- SciPy (Drift Detection)
+- Joblib (Model Serialization)
 
-Python · XGBoost · Scikit-learn · Pandas · NumPy · SHAP · SciPy · Joblib
+**Backend**
+- Flask
+- Flask-CORS
 
-### Backend
-
-Flask · Flask-CORS · REST APIs
-
-### Frontend
-
-HTML · CSS · JavaScript · Google Fonts
-
----
-
-# 📊 Model Architecture
-
-## Data Splits (Leakage-Safe Design)
-
-| Split   | Purpose                        | Size  |
-| ------- | ------------------------------ | ----- |
-| Train   | Model fitting                  | 60%   |
-| Val-ES  | Early stopping                 | 15%   |
-| Val-Cal | Calibration + threshold tuning | 12.5% |
-| Test    | Final evaluation               | 20%   |
+**Frontend**
+- HTML, CSS, JavaScript
 
 ---
 
-## Feature Engineering
+## 📂 Dataset
 
-Six derived financial features enhance predictive power:
+- Tabular loan applicant dataset (CSV)
+- Target: `loan_status` (0 = No Default, 1 = Default)
+- 13 raw financial & demographic features
 
-* Income-to-loan ratio
-* Debt burden
-* Credit-per-history ratio
-* Annual loan payment
-* Payment-to-income ratio
-* Employment-to-age ratio
-
-Outliers are capped using percentile bounds derived from training data.
-
----
-
-## Hyperparameter Optimization
-
-Randomized search (30 iterations, 5-fold stratified CV) optimizing ROC-AUC across:
-
-`learning_rate, max_depth, min_child_weight, subsample, colsample_bytree, gamma, reg_alpha, reg_lambda`
+Preprocessing includes:
+- Median imputation (numeric)
+- Mode imputation (categorical)
+- 99.5th percentile outlier capping (training-set derived)
+- Encoding (ordinal + label encoding)
 
 ---
 
-## Probability Calibration
+## 🔍 Feature Engineering
 
-Raw boosted-tree probabilities are calibrated using **Platt Scaling** (logistic regression on held-out validation scores) to correct overconfidence.
+Six derived financial ratios improve predictive power:
+
+- `income_to_loan_ratio`
+- `debt_burden`
+- `credit_per_history`
+- `annual_loan_payment`
+- `payment_to_income`
+- `emp_to_age_ratio`
+
+These engineered features enhance nonlinear separability and model discrimination.
 
 ---
 
-# 📈 Model Performance (Held-Out Test Set)
+## ⚙️ Data Splitting Strategy (Leakage-Safe)
 
-Evaluation performed on a completely unseen test split (20%).
+| Split | Purpose | Size |
+|--------|----------|------|
+| Train | Model training | 60% |
+| Val-ES | Early stopping | 15% |
+| Val-Cal | Probability calibration + threshold tuning | 12.5% |
+| Test | Final evaluation | 20% |
 
-```
-==================================================
-TEST RESULTS (Held-Out, Never Seen)
-==================================================
-Accuracy:   0.9320
-ROC-AUC:    0.9782
-F1-Score:   0.8452
-AUC Gap:    0.0213  ✅ (Low Overfitting)
-KS Stat:    0.8286
-==================================================
-```
+This 4-way split ensures **no data leakage** across optimization stages.
 
-## Classification Report
+---
 
-| Class           | Precision | Recall | F1-Score | Support |
-| --------------- | --------- | ------ | -------- | ------- |
-| Non-Default (0) | 0.95      | 0.96   | 0.96     | 7000    |
-| Default (1)     | 0.86      | 0.84   | 0.85     | 2000    |
+## 🤖 Machine Learning Pipeline
 
-Overall Accuracy: **93.2%**
-Weighted F1-Score: **0.93**
+**Primary Model:** XGBoost Classifier  
+- RandomizedSearchCV (30 iterations)  
+- 5-fold stratified cross-validation  
+- Optimized for ROC-AUC  
+- L1 & L2 regularization  
+- Early stopping (50 rounds)  
 
-## Confusion Matrix
+**Calibration Model:** Logistic Regression  
+- Platt Scaling on `val_cal` split  
+
+---
+
+## 📊 Model Performance (Held-Out Test Set)
+
+| Metric | Value |
+|--------|--------|
+| Accuracy | **93.20%** |
+| ROC-AUC | **0.9782** |
+| F1-Score | **0.8452** |
+| KS Statistic | **0.8286** |
+| AUC Gap | **0.0213** (Low Overfitting) |
+
+### Confusion Matrix
 
 ```
 [[6717   283]
  [ 329  1671]]
 ```
 
-* True Negatives: 6717
-* False Positives: 283
-* False Negatives: 329
-* True Positives: 1671
-
-### Model Strengths
-
-* Excellent separation power (**ROC-AUC = 0.9782**)
-* Strong class discrimination (**KS = 0.8286**)
-* Minimal overfitting (**AUC gap = 0.0213**)
-* Balanced precision-recall performance on minority default class
-
-This performance indicates a production-quality risk scoring model with strong generalization capability.
+✔ Strong class separation  
+✔ Minimal overfitting (AUC gap < 0.03)  
+✔ Balanced precision-recall on minority default class  
 
 ---
 
-# 🖥 Frontend Features
+## 🎯 Probability Calibration & Threshold Optimization
 
-* Live API status indicator
-* Auto loan-to-income calculation
-* Animated probability visualization
-* Credit score ring display
-* Risk classification breakdown
-* Offline fallback simulation mode
+- Raw XGBoost probabilities calibrated using **Platt Scaling**
+- Decision threshold optimized for **maximum F1-score**
+- Threshold selected on calibration set only (never test set)
+- Risk levels mapped to interpretable lending decisions
+- Credit score generated on 300–850 scale
 
 ---
 
-# ⚠️ Limitations
+## 🖥 Full-Stack Integration
 
-* No authentication layer
-* Not optimized for distributed production deployment
-* Drift detection is feature-level only (not population-level modeling)
+- Interactive frontend dashboard
+- Live model status indicator
+- Animated risk visualization
+- Auto loan-to-income calculation
+- Offline fallback demo mode
+
+---
+
+## 🎯 Key Learnings
+
+- Production-style ML validation workflow
+- Probability calibration for risk modeling
+- Overfitting detection via AUC gap
+- KS statistic for financial model evaluation
+- Drift detection using KS test
+- REST API deployment with Flask
+- Full-stack ML system integration
+
+---
+
+## ⚠️ Limitations
+
+- Static dataset (no automated retraining pipeline)
+- In-memory prediction logging (not persistent)
+- No authentication layer for API
+- Development Flask server (not production WSGI)
+- No fairness/bias auditing
+- SHAP computed on uncalibrated model (ranking valid, magnitudes not calibrated)
+- Frontend fallback uses heuristic
